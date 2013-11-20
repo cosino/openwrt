@@ -17,7 +17,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.openssl.org/source/ \
 	ftp://ftp.funet.fi/pub/crypt/mirrors/ftp.openssl.org/source \
-	ftp://ftp.sunet.se/pub/security/tools/net/openssl/source/
+	ftp://ftp.sunet.se/pub/security/tools/net/openssl/source/ \
+	ftp://ftp.openssl.org/source/
 PKG_MD5SUM:=66bf6f10f060d561929de96f9dfe5b8c
 
 PKG_LICENSE:=SSLEAY OPENSSL
