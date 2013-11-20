@@ -23,6 +23,7 @@ endef
 
 define MkuImageDtb
 	cat $(KDIR)/zImage $(LINUX_DIR)/arch/arm/boot/dts/$(2).dtb > $(KDIR)/zImage-$(1)
+	cp $(KDIR)/zImage-$(1) $(BIN_DIR)/$(IMG_PREFIX)-$(1)-zImage
 	mkimage -A arm -T kernel -C none -a 0x20008000 -e 0x20008000 \
 		-n "OpenWrt ARM $(LINUX_VERSION)" \
 		-d $(KDIR)/zImage-$(1) $(BIN_DIR)/$(IMG_PREFIX)-$(1)-uImage
