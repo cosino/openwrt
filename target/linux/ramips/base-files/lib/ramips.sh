@@ -13,6 +13,9 @@ ramips_board_detect() {
 	machine=$(awk 'BEGIN{FS="[ \t]+:[ \t]"} /machine/ {print $2}' /proc/cpuinfo)
 
 	case "$machine" in
+	*"7Links PX-4885")
+		name="px4885"
+		;;
 	*"8devices Carambola")
 		name="carambola"
 		;;
@@ -21,6 +24,18 @@ ramips_board_detect() {
 		;;
 	*"Edimax 3g-6200nl")
 		name="3g-6200nl"
+		;;
+	*"A5-V11")
+		name="a5-v11"
+		;;
+	*"Aigale Ai-BR100")
+		name="ai-br100"
+		;;
+	*"Airlink101 AR670W")
+		name="ar670w"
+		;;
+	*"Airlink101 AR725W")
+		name="ar725w"
 		;;
 	*"AirLive Air3GII")
 		name="air3gii"
@@ -43,14 +58,20 @@ ramips_board_detect() {
 	*"ARC FreeStation5")
 		name="freestation5"
 		;;
+	*"Archer C20i")
+		name="c20i"
+		;;
 	*"Argus ATP-52B")
 		name="argus-atp52b"
 		;;
 	*"AsiaRF AWM002 EVB")
 		name="awm002-evb"
 		;;
-	*"BR6524N")
-		name="br6524n"
+	*"AsiaRF AWM003 EVB")
+		name="awm003-evb"
+		;;
+	*"AsiaRF AWAPN2403")
+		name="awapn2403"
 		;;
 	*"Asus WL-330N")
 		name="wl-330n"
@@ -63,6 +84,18 @@ ramips_board_detect() {
 		;;
 	*"Aztech HW550-3G")
 		name="hw550-3g"
+		;;
+	*"Buffalo WSR-600DHP")
+		name="wsr-600"
+		;;
+	*"Buffalo WSR-1166DHP")
+		name="wsr-1166"
+		;;
+	*"Firefly FireWRT")
+		name="firewrt"
+		;;
+	*"CY-SWR1100")
+		name="cy-swr1100"
 		;;
 	*"DCS-930")
 		name="dcs-930"
@@ -103,11 +136,20 @@ ramips_board_detect() {
 	*"DIR-810L")
 		name="dir-810l"
 		;;
+	*"DIR-860L B1")
+		name="dir-860l-b1"
+		;;
 	*"DAP-1350")
 		name="dap-1350"
 		;;
 	*"ESR-9753")
 		name="esr-9753"
+		;;
+	*"EASYACC WI-STOR WIZARD 8800")
+		name="wizard8800"
+		;;
+	*"Edimax BR-6475nD")
+		name="br-6475nd"
 		;;
 	*"F7C027")
 		name="f7c027"
@@ -127,11 +169,20 @@ ramips_board_detect() {
 	*"La Fonera 2.0N")
 		name="fonera20n"
 		;;
+	*"Asus RT-N14U")
+		name="rt-n14u"
+		;;
 	*"Asus RT-N13U")
 		name="rt-n13u"
 		;;
 	*"MoFi Network MOFI3500-3GN")
 		name="mofi3500-3gn"
+		;;
+	*"HILINK HLK-RM04")
+		name="hlk-rm04"
+		;;
+	*"HooToo HT-TM02")
+		name="ht-tm02"
 		;;
 	*"HAME MPR-A1")
  		name="mpr-a1"
@@ -139,6 +190,18 @@ ramips_board_detect() {
 	*"HAME MPR-A2")
  		name="mpr-a2"
  		;;
+	*"Kingston MLW221")
+		name="mlw221"
+		;;
+	*"Kingston MLWG2")
+		name="mlwg2"
+		;;
+	*"Linksys E1700")
+		name="e1700"
+		;;
+	*"Planex MZK-750DHP")
+		name="mzk-750dhp"
+		;;
 	*"NBG-419N")
 		name="nbg-419n"
 		;;
@@ -148,14 +211,26 @@ ramips_board_detect() {
 	*"NexAira BC2")
 		name="bc2"
 		;;
+	*"Nexx WT1520")
+		name="wt1520"
+		;;
+	*"Nexx WT3020")
+		name="wt3020"
+		;;
 	*"NW718")
 		name="nw718"
+		;;
+	*"Intenso Memory 2 Move")
+		name="m2m"
 		;;
 	*"Omnima EMB HPM")
 		name="omni-emb-hpm"
 		;;
 	*"Omnima MiniEMBWiFi")
 		name="omni-emb"
+		;;
+	*"Omnima MiniPlug")
+		name="omni-plug"
 		;;
 	*"Petatel PSR-680W"*)
 		name="psr-680w"
@@ -184,6 +259,9 @@ ramips_board_detect() {
 	*"Asus RP-N53")
 		name="rp-n53"
 		;;
+	*"Ralink MT7620a + MT7530 evaluation board")
+		name="mt7620a_mt7530"
+		;;
 	*"RT-G32 B1")
 		name="rt-g32-b1"
 		;;
@@ -196,6 +274,9 @@ ramips_board_detect() {
 	*"RT-N56U")
 		name="rt-n56u"
 		;;
+	*"RUT5XX")
+		name="rut5xx"
+		;;
 	*"Skyline SL-R7205"*)
 		name="sl-r7205"
 		;;
@@ -205,14 +286,23 @@ ramips_board_detect() {
 	*"V22RW-2X2")
 		name="v22rw-2x2"
 		;;
+	*"VoCore")
+		name="vocore"
+		;;
 	*"W502U")
 		name="w502u"
+		;;
+	*"WMR-300")
+		name="wmr300"
 		;;
 	*"WHR-300HP2")
 		name="whr-300hp2"
 		;;
 	*"WHR-600D")
 		name="whr-600d"
+		;;
+	*"WHR-1166D")
+		name="whr-1166d"
 		;;
 	*"WHR-G300N")
 		name="whr-g300n"
@@ -225,6 +315,9 @@ ramips_board_detect() {
 		;;
 	*"Tenda 3G300M")
 		name="3g300m"
+		;;
+	*"Tenda 3G150B")
+		name="3g150b"
 		;;
 	*"Tenda W306R V2.0")
 		name="w306r-v20"
@@ -264,6 +357,39 @@ ramips_board_detect() {
 		;;
 	*"HG255D")
 		name="hg255d"
+		;;
+	*"V22SG")
+		name="v22sg"
+		;;
+	*"WRTNODE")
+		name="wrtnode"
+		;;
+	*"Wansview NCS601W")
+		name="ncs601w"
+		;;
+	*"Xiaomi MiWiFi Mini")
+		name="xiaomi-miwifi-mini"
+		;;
+	*"Sercomm NA930")
+		name="na930"
+		;;
+	*"Zbtlink ZBT-WA05")
+		name="zbt-wa05"
+		;;
+	*"ZBT WR8305RT")
+		name="wr8305rt"
+		;;
+	*"Lenovo Y1")
+		name="y1"
+		;;
+	*"Lenovo Y1S")
+		name="y1s"
+		;;
+	*"Mediatek MT7621 evaluation board")
+		name="mt7621"
+		;;
+	*"Mediatek MT7628AN evaluation board")
+		name="mt7628"
 		;;
 	*)
 		name="generic"

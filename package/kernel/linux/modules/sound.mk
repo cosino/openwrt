@@ -11,33 +11,41 @@ SOUND_MENU:=Sound Support
 SOUNDCORE_LOAD ?= \
 	soundcore \
 	snd \
-	snd-page-alloc \
 	snd-hwdep \
 	snd-seq-device \
 	snd-rawmidi \
 	snd-timer \
 	snd-pcm \
 	snd-mixer-oss \
-	snd-pcm-oss
+	snd-pcm-oss \
+	snd-compress
 
 SOUNDCORE_FILES ?= \
 	$(LINUX_DIR)/sound/soundcore.ko \
 	$(LINUX_DIR)/sound/core/snd.ko \
-	$(LINUX_DIR)/sound/core/snd-page-alloc.ko \
 	$(LINUX_DIR)/sound/core/snd-hwdep.ko \
 	$(LINUX_DIR)/sound/core/seq/snd-seq-device.ko \
 	$(LINUX_DIR)/sound/core/snd-rawmidi.ko \
 	$(LINUX_DIR)/sound/core/snd-timer.ko \
 	$(LINUX_DIR)/sound/core/snd-pcm.ko \
 	$(LINUX_DIR)/sound/core/oss/snd-mixer-oss.ko \
-	$(LINUX_DIR)/sound/core/oss/snd-pcm-oss.ko
+	$(LINUX_DIR)/sound/core/oss/snd-pcm-oss.ko \
+	$(LINUX_DIR)/sound/core/snd-compress.ko
 
-ifeq ($(strip $(call CompareKernelPatchVer,$(KERNEL_PATCHVER),ge,3.3.0)),1)
+ifeq ($(strip $(call CompareKernelPatchVer,$(KERNEL_PATCHVER),ge,3.12.0)),1)
 SOUNDCORE_LOAD += \
-	snd-compress
+	$(if $(CONFIG_SND_DMAENGINE_PCM),snd-pcm-dmaengine)
 
 SOUNDCORE_FILES += \
-	$(LINUX_DIR)/sound/core/snd-compress.ko
+	$(if $(CONFIG_SND_DMAENGINE_PCM),$(LINUX_DIR)/sound/core/snd-pcm-dmaengine.ko)
+endif
+
+ifeq ($(strip $(call CompareKernelPatchVer,$(KERNEL_PATCHVER),lt,3.14.0)),1)
+SOUNDCORE_LOAD += \
+	snd-page-alloc
+
+SOUNDCORE_FILES += \
+	$(LINUX_DIR)/sound/core/snd-page-alloc.ko
 endif
 
 define KernelPackage/sound-core
@@ -186,11 +194,11 @@ define KernelPackage/sound-soc-imx
 	CONFIG_SND_IMX_SOC \
 	CONFIG_SND_SOC_IMX_AUDMUX \
 	CONFIG_SND_SOC_FSL_SSI \
-	CONFIG_SND_SOC_IMX_PCM
+	CONFIG_SND_SOC_IMX_PCM_DMA
   FILES:= \
 	$(LINUX_DIR)/sound/soc/fsl/snd-soc-imx-audmux.ko \
 	$(LINUX_DIR)/sound/soc/fsl/snd-soc-fsl-ssi.ko \
-	$(LINUX_DIR)/sound/soc/fsl/snd-soc-imx-pcm.ko
+	$(LINUX_DIR)/sound/soc/fsl/imx-pcm-dma.ko
   AUTOLOAD:=$(call AutoLoad,56,snd-soc-imx-audmux snd-soc-fsl-ssi snd-soc-imx-pcm)
   DEPENDS:=@TARGET_imx6 +kmod-sound-soc-core
   $(call AddDepends/sound)
@@ -241,7 +249,7 @@ $(eval $(call KernelPackage,sound-soc-gw_avila))
 
 
 define KernelPackage/pcspkr
-  DEPENDS:=@!TARGET_x86
+  DEPENDS:=@TARGET_x86
   TITLE:=PC speaker support
   KCONFIG:= \
 	CONFIG_INPUT_PCSPKR \

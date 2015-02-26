@@ -14,6 +14,7 @@ PKG_SOURCE:=$(PKG_BASE_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.openwrt.org/sources/
 PKG_MD5SUM:=e9152ced26a91fbeefa4f34badb97484
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/dsl_cpe_control-$(PKG_VERSION)
+PKG_LICENSE:=BSD-2-Clause
 
 PKG_BUILD_DEPENDS:=kmod-ltq-vdsl-vr9
 
@@ -24,7 +25,7 @@ define Package/ltq-vdsl-app
   CATEGORY:=Network
   TITLE:=Lantiq VDSL userland tool
   URL:=http://www.lantiq.com/
-  DEPENDS:=@TARGET_lantiq_xway +libpthread
+  DEPENDS:=@TARGET_lantiq_xrx200 +libpthread
 endef
 
 define Package/ltq-vdsl-app/description
@@ -71,7 +72,6 @@ define Package/ltq-vdsl-app/install
 
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/dsl_cpe_control $(1)/sbin/vdsl_cpe_control
-	$(INSTALL_BIN) ./files/dsl_notify.sh $(1)/sbin
 endef
 
 $(eval $(call BuildPackage,ltq-vdsl-app))

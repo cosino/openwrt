@@ -12,6 +12,47 @@ sub confstr($) {
 	return $conf;
 }
 
+sub version_to_num($) {
+	my $str = shift;
+	my $num = 0;
+
+	if (defined($str) && $str =~ /^\d+(?:\.\d+)+$/)
+	{
+		my @n = (split(/\./, $str), 0, 0, 0, 0);
+		$num = ($n[0] << 24) | ($n[1] << 16) | ($n[2] << 8) | $n[3];
+	}
+
+	return $num;
+}
+
+sub version_filter_list(@) {
+	my $cmpver = version_to_num(shift @_);
+	my @items;
+
+	foreach my $item (@_)
+	{
+		if ($item =~ s/@(lt|le|gt|ge|eq|ne)(\d+(?:\.\d+)+)\b//)
+		{
+			my $op = $1;
+			my $symver = version_to_num($2);
+
+			if ($symver > 0 && $cmpver > 0)
+			{
+				next unless (($op eq 'lt' && $cmpver <  $symver) ||
+				             ($op eq 'le' && $cmpver <= $symver) ||
+				             ($op eq 'gt' && $cmpver >  $symver) ||
+				             ($op eq 'ge' && $cmpver >= $symver) ||
+				             ($op eq 'eq' && $cmpver == $symver) ||
+				             ($op eq 'ne' && $cmpver != $symver));
+			}
+		}
+
+		push @items, $item;
+	}
+
+	return @items;
+}
+
 sub parse_target_metadata() {
 	my $file = shift @ARGV;
 	my ($target, @target, $profile);
@@ -75,7 +116,10 @@ sub parse_target_metadata() {
 	}
 	close FILE;
 	foreach my $target (@target) {
-		next if @{$target->{subtargets}} > 0;
+		if (@{$target->{subtargets}} > 0) {
+			$target->{profiles} = [];
+			next;
+		}
 		@{$target->{profiles}} > 0 or $target->{profiles} = [
 			{
 				id => 'Default',
@@ -93,6 +137,7 @@ sub gen_kconfig_overrides() {
 	my $package;
 	my $pkginfo = shift @ARGV;
 	my $cfgfile = shift @ARGV;
+	my $patchver = shift @ARGV;
 
 	# parameter 2: build system config
 	open FILE, "<$cfgfile" or return;
@@ -107,7 +152,7 @@ sub gen_kconfig_overrides() {
 		/^Package:\s*(.+?)\s*$/ and $package = $1;
 		/^Kernel-Config:\s*(.+?)\s*$/ and do {
 			my @config = split /\s+/, $1;
-			foreach my $config (@config) {
+			foreach my $config (version_filter_list($patchver, @config)) {
 				my $val = 'm';
 				my $override;
 				if ($config =~ /^(.+?)=(.+)$/) {
@@ -158,6 +203,7 @@ sub target_config_features(@) {
 		/broken/ and $ret .= "\tdepends on BROKEN\n";
 		/audio/ and $ret .= "\tselect AUDIO_SUPPORT\n";
 		/display/ and $ret .= "\tselect DISPLAY_SUPPORT\n";
+		/dt/ and $ret .= "\tselect USES_DEVICETREE\n";
 		/gpio/ and $ret .= "\tselect GPIO_SUPPORT\n";
 		/pci/ and $ret .= "\tselect PCI_SUPPORT\n";
 		/pcie/ and $ret .= "\tselect PCIE_SUPPORT\n";
@@ -179,6 +225,8 @@ sub target_config_features(@) {
 		/nommu/ and $ret .= "\tselect NOMMU\n";
 		/mips16/ and $ret .= "\tselect HAS_MIPS16\n";
 		/rfkill/ and $ret .= "\tselect RFKILL_SUPPORT\n";
+		/low_mem/ and $ret .= "\tselect LOW_MEMORY_FOOTPRINT\n";
+		/nand/ and $ret .= "\tselect NAND_SUPPORT\n";
 	}
 	return $ret;
 }
@@ -498,7 +546,7 @@ sub mconf_depends {
 					next if $depend eq $condition;
 					$depend = "$depend if $condition";
 				} else {
-					$depend = "!($condition) || $depend";
+					$depend = "!($condition) || $depend" unless $dep->{$condition} eq 'select';
 				}
 			}
 		}
@@ -512,6 +560,18 @@ sub mconf_depends {
 	foreach my $depend (keys %$dep) {
 		my $m = $dep->{$depend};
 		$res .= "\t\t$m $depend\n";
+	}
+	return $res;
+}
+
+sub mconf_conflicts {
+	my $pkgname = shift;
+	my $depends = shift;
+	my $res = "";
+
+	foreach my $depend (@$depends) {
+		next unless $package{$depend};
+		$res .= "\t\tdepends on m || (PACKAGE_$depend != y)\n";
 	}
 	return $res;
 }
@@ -577,6 +637,7 @@ sub print_package_config_category($) {
 			}
 			print mconf_depends($pkg->{name}, $pkg->{depends}, 0);
 			print mconf_depends($pkg->{name}, $pkg->{mdepends}, 0);
+			print mconf_conflicts($pkg->{name}, $pkg->{conflicts});
 			print "\t\thelp\n";
 			print $pkg->{description};
 			print "\n";
@@ -618,6 +679,13 @@ EOF
 	print "endmenu\n\n";
 }
 
+sub print_package_overrides() {
+	keys %overrides > 0 or return;
+	print "\tconfig OVERRIDE_PKGS\n";
+	print "\t\tstring\n";
+	print "\t\tdefault \"".join(" ", keys %overrides)."\"\n\n";
+}
+
 sub gen_package_config() {
 	parse_package_metadata($ARGV[0]) or exit 1;
 	print "menuconfig IMAGEOPT\n\tbool \"Image configuration\"\n\tdefault n\n";
@@ -643,6 +711,7 @@ EOF
 	foreach my $cat (sort {uc($a) cmp uc($b)} keys %category) {
 		print_package_config_category $cat;
 	}
+	print_package_overrides();
 }
 
 sub get_conditional_dep($$) {
@@ -673,19 +742,12 @@ sub gen_package_mk() {
 
 		next if defined $pkg->{vdepends};
 
-		if ($ENV{SDK}) {
-			$conf{$pkg->{src}} or do {
-				$config = 'm';
-				$conf{$pkg->{src}} = 1;
-			};
-		} else {
-			$config = "\$(CONFIG_PACKAGE_$name)"
-		}
+		$config = "\$(CONFIG_PACKAGE_$name)";
 		if ($config) {
 			$pkg->{buildonly} and $config = "";
 			print "package-$config += $pkg->{subdir}$pkg->{src}\n";
 			if ($pkg->{variant}) {
-				if (!defined($done{$pkg->{src}})) {
+				if (!defined($done{$pkg->{src}}) or $pkg->{variant_default}) {
 					print "\$(curdir)/$pkg->{subdir}$pkg->{src}/default-variant := $pkg->{variant}\n";
 				}
 				print "\$(curdir)/$pkg->{subdir}$pkg->{src}/variants += \$(if $config,$pkg->{variant})\n"
@@ -780,9 +842,10 @@ sub gen_package_mk() {
 				} elsif (defined($srcpackage{$dep})) {
 					$idx = $subdir{$dep}.$dep;
 				}
-				$idx .= $suffix;
 				undef $idx if $idx eq 'base-files';
 				if ($idx) {
+					$idx .= $suffix;
+
 					my $depline;
 					next if $pkg->{src} eq $pkg_dep->{src}.$suffix;
 					next if $dep{$condition.":".$pkg->{src}."->".$idx};
@@ -848,6 +911,44 @@ sub gen_package_source() {
 	}
 }
 
+sub gen_package_feeds() {
+	parse_package_metadata($ARGV[0]) or exit 1;
+	foreach my $name (sort {uc($a) cmp uc($b)} keys %package) {
+		my $pkg = $package{$name};
+		if ($pkg->{name} && $pkg->{feed}) {
+			print "Package/$name/feed = $pkg->{feed}\n";
+		}
+	}
+}
+
+sub gen_package_license($) {
+	my $level = shift;
+	parse_package_metadata($ARGV[0]) or exit 1;
+	foreach my $name (sort {uc($a) cmp uc($b)} keys %package) {
+		my $pkg = $package{$name};
+		if ($pkg->{name}) {
+			if ($pkg->{license}) {
+				print "$pkg->{name}: ";
+				print "$pkg->{license}\n";
+				if ($pkg->{licensefiles} && $level == 0) {
+					print "\tFiles: $pkg->{licensefiles}\n";
+				}
+			} else {
+				if ($level == 1) {
+					print "$pkg->{name}: Missing license! ";
+					print "Please fix $pkg->{makefile}\n";
+				}
+			}
+		}
+	}
+}
+
+sub gen_version_filtered_list() {
+	foreach my $item (version_filter_list(@ARGV)) {
+		print "$item\n";
+	}
+}
+
 sub parse_command() {
 	my $cmd = shift @ARGV;
 	for ($cmd) {
@@ -856,14 +957,22 @@ sub parse_command() {
 		/^package_config$/ and return gen_package_config();
 		/^kconfig/ and return gen_kconfig_overrides();
 		/^package_source$/ and return gen_package_source();
+		/^package_feeds$/ and return gen_package_feeds();
+		/^package_license$/ and return gen_package_license(0);
+		/^package_licensefull$/ and return gen_package_license(1);
+		/^version_filter$/ and return gen_version_filtered_list();
 	}
 	print <<EOF
 Available Commands:
-	$0 target_config [file] 	Target metadata in Kconfig format
-	$0 package_mk [file]		Package metadata in makefile format
-	$0 package_config [file] 	Package metadata in Kconfig format
-	$0 kconfig [file] [config]	Kernel config overrides
-	$0 package_source [file] 	Package source file information
+	$0 target_config [file] 		Target metadata in Kconfig format
+	$0 package_mk [file]			Package metadata in makefile format
+	$0 package_config [file] 		Package metadata in Kconfig format
+	$0 kconfig [file] [config] [patchver]	Kernel config overrides
+	$0 package_source [file] 		Package source file information
+	$0 package_feeds [file]			Package feed information in makefile format
+	$0 package_license [file] 		Package license information
+	$0 package_licensefull [file] 		Package license information (full list)
+	$0 version_filter [patchver] [list...]	Filter list of version tagged strings
 
 EOF
 }

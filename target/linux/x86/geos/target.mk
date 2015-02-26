@@ -1,5 +1,5 @@
 BOARDNAME:=Traverse Geos
-FEATURES:=squashfs ext4 pci usb gpio
+FEATURES:=squashfs ext4 pci usb gpio broken
 DEFAULT_PACKAGES += \
             kmod-crypto-hw-geode kmod-crypto-ocf \
             kmod-gpio-cs5535-new kmod-gpio-nsc \
@@ -10,7 +10,7 @@ DEFAULT_PACKAGES += \
             kmod-i2c-core kmod-i2c-gpio \
             kmod-i2c-algo-bit kmod-i2c-algo-pca kmod-i2c-algo-pcf \
             kmod-i2c-scx200-acb \
-            kmod-usb-core kmod-usb2 kmod-usb-ohci \
+            kmod-usb-core kmod-usb2-pci kmod-usb-ohci \
             kmod-cfg80211 kmod-mac80211 \
             kmod-mppe kmod-pppoa kmod-pppol2tp \
             kmod-ath5k kmod-ath9k \
@@ -21,7 +21,6 @@ DEFAULT_PACKAGES += \
             kmod-cpu-msr \
             soloscli linux-atm br2684ctl ppp-mod-pppoa pppdump pppstats \
             hwclock wpad flashrom tc
-LINUX_VERSION:=3.8.13
 CS5535_MASK:=0x0E000048
 
 CPU_TYPE := geode

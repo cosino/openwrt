@@ -13,7 +13,7 @@ BOARDS:= \
 	imx28-duckbill
 
 define Image/BuildKernel/olinuxino-bootlet
-	cat $(LINUX_DIR)/arch/arm/boot/zImage $(LINUX_DIR)/arch/arm/boot/dts/imx23-olinuxino.dtb > $(STAGING_DIR)/zImage_dtb
+	cat $(LINUX_DIR)/arch/arm/boot/zImage $(DTS_DIR)/imx23-olinuxino.dtb > $(STAGING_DIR)/zImage_dtb
 	(cd $(STAGING_DIR); \
 	$(STAGING_DIR)/../host/bin/elftosb -z -c ./linux_prebuilt.db -o linux.sb; \
 	dd if=/dev/zero of=sd_mmc_bootstream.raw bs=512 count=4; \
@@ -21,11 +21,11 @@ define Image/BuildKernel/olinuxino-bootlet
 	)
 endef
 
-define Image/BuildKernel/olinuxino-uboot
+define Image/BuildKernel/mxs-uboot
 	mkimage -A arm -O linux -T kernel -C none \
-		-a 0x42000000 -e 0x42000000 \
+		-a 0x40008000 -e 0x40008000 \
 		-n 'ARM OpenWrt Linux-$(LINUX_VERSION)' \
-		-d $(KDIR)/vmlinux $(KDIR)/uImage
+		-d $(KDIR)/zImage $(KDIR)/uImage
 	cp $(KDIR)/uImage $(BIN_DIR)/$(IMG_PREFIX)-uImage
 endef
 
@@ -35,13 +35,13 @@ define Image/BuildKernel
 	$(call Image/BuildKernel/olinuxino-bootlet)
   endif
 
-  ifeq ($(CONFIG_PACKAGE_uboot-imx23-mx23_olinuxino),y)
-	$(call Image/BuildKernel/olinuxino-uboot)
+  ifeq ($(CONFIG_PACKAGE_uboot-mxs-mx23_olinuxino),y)
+	$(call Image/BuildKernel/mxs-uboot)
   endif
   
 	$(CP) $(LINUX_DIR)/arch/arm/boot/zImage $(BIN_DIR)/openwrt-$(BOARD)-zImage
 	$(foreach board,$(BOARDS),
-		$(CP) $(LINUX_DIR)/arch/arm/boot/dts/$(board).dtb $(BIN_DIR)/
+		$(CP) $(DTS_DIR)/$(board).dtb $(BIN_DIR)/
 	)
 endef
 
@@ -55,7 +55,7 @@ define Image/InstallKernel
   ifneq ($(CONFIG_TARGET_ROOTFS_INCLUDE_DTB),)
 	mkdir -p $(TARGET_DIR)/boot
 	$(foreach board,$(BOARDS),
-		$(CP) $(LINUX_DIR)/arch/arm/boot/dts/$(board).dtb $(TARGET_DIR)/boot/
+		$(CP) $(DTS_DIR)/$(board).dtb $(TARGET_DIR)/boot/
 	)
   endif
 

@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpcap
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.tcpdump.org/release/
-PKG_MD5SUM:=f78455a92622b7a3c05c58b6ad1cec7e
+PKG_MD5SUM:=7e7321fb3aff2f2bb05c8229f3795d4a
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_LICENSE:=BSD-3-Clause
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -59,7 +60,11 @@ CONFIGURE_ARGS += \
 	--without-septel \
 	--without-dag \
 	--without-libnl \
-	--disable-can
+	--without-snf \
+	--disable-can \
+	--disable-canusb \
+	--disable-dbus \
+	--disable-bluetooth
 
 ifeq ($(CONFIG_IPV6),y)
 CONFIGURE_ARGS += \

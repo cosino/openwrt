@@ -1,9 +1,11 @@
 #!/bin/sh
 . /lib/functions.sh
+. /lib/functions/system.sh
 
 # initialize defaults
 RAMFS_COPY_BIN=""	# extra programs for temporary ramfs root
 RAMFS_COPY_DATA=""	# extra data files
+export MTD_CONFIG_ARGS=""
 export INTERACTIVE=0
 export VERBOSE=1
 export SAVE_CONFIG=1
@@ -19,7 +21,7 @@ export FORCE=0
 export TEST=0
 
 # parse options
-while [ -n "$1" ]; do 
+while [ -n "$1" ]; do
 	case "$1" in
 		-i) export INTERACTIVE=1;;
 		-d) export DELAY="$2"; shift;;
@@ -100,14 +102,19 @@ add_uci_conffiles() {
 	local file="$1"
 	( find $(sed -ne '/^[[:space:]]*$/d; /^#/d; p' \
 		/etc/sysupgrade.conf /lib/upgrade/keep.d/* 2>/dev/null) \
-		-type f 2>/dev/null;
+		-type f -o -type l 2>/dev/null;
 	  opkg list-changed-conffiles ) | sort -u > "$file"
 	return 0
 }
 
 add_overlayfiles() {
 	local file="$1"
-	find /overlay/etc/ -type f | sed \
+	if [ -d /overlay/upper ]; then
+		local overlaydir="/overlay/upper"
+	else
+		local overlaydir="/overlay"
+	fi
+	find $overlaydir/etc/ -type f -o -type l | sed \
 		-e 's,^/overlay/,/,' \
 		-e '\,/META_[a-zA-Z0-9]*$,d' \
 		-e '\,/functions.sh$,d' \
@@ -123,6 +130,8 @@ sysupgrade_image_check="platform_check_image"
 	sysupgrade_init_conffiles="add_overlayfiles"
 
 include /lib/upgrade
+
+[ "$1" = "nand" ] && nand_upgrade_stage2 $@
 
 do_save_conffiles() {
 	local conf_tar="${1:-$CONF_TAR}"
@@ -209,9 +218,11 @@ run_hooks "" $sysupgrade_pre_upgrade
 ubus call system upgrade
 touch /tmp/sysupgrade
 
-kill_remaining TERM
-sleep 3
-kill_remaining KILL
+if [ ! -f /tmp/failsafe ] ; then
+	kill_remaining TERM
+	sleep 3
+	kill_remaining KILL
+fi
 
 if [ -n "$(rootfs_type)" ]; then
 	v "Switching to ramdisk..."

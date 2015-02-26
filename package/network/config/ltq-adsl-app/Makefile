@@ -16,6 +16,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/dsl_cpe_control-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://mirror2.openwrt.org/sources/
 PKG_MD5SUM:=ee315306626b68794d3d3636dabfe161
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
+PKG_LICENSE:=BSD-3-Clause
 
 PKG_FIXUP:=autoreconf
 
@@ -38,10 +39,6 @@ endef
 
 define Package/ltq-adsl-app/description
 	Infineon DSL CPE API for Amazon SE, Danube and Vinax.
-endef
-
-define Package/ltq-adsl-app/config
-	source "$(SOURCE)/Config.in"
 endef
 
 LTQ_DSL_MAX_DEVICE=1
@@ -74,16 +71,6 @@ CONFIGURE_ARGS += \
 	--enable-dsl-pm-line-thresholds \
 	--enable-dsl-pm-optional-parameters
 
-ifeq ($(CONFIG_LTQ_DSL_ENABLE_SOAP),y)
-CONFIGURE_ARGS += \
-	--enable-soap-support
-endif
-
-ifeq ($(CONFIG_LTQ_DSL_ENABLE_DSL_EVENT_POLLING),y)
-CONFIGURE_ARGS += \
-	--enable-dsl-event-polling
-endif
-
 TARGET_CFLAGS += -I$(LINUX_DIR)/include
 
 define Package/ltq-adsl-app/install
@@ -92,7 +79,6 @@ define Package/ltq-adsl-app/install
 
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/dsl_cpe_control $(1)/sbin
-	$(INSTALL_BIN) ./files/dsl_notify.sh $(1)/sbin
 endef
 
 $(eval $(call BuildPackage,ltq-adsl-app))

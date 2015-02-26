@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010 Jo-Philipp Wich <xm@subsignal.org>
+# Copyright (C) 2010-2015 Jo-Philipp Wich <jow@openwrt.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=px5g
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/px5g
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Standalone X.509 certificate generator
-  MAINTAINER:=Jo-Philipp Wich <xm@subsignal.org>
+  TITLE:=X.509 certificate generator (using PolarSSL)
+  MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+  DEPENDS:=+libpolarssl
 endef
 
 define Package/px5g/description
@@ -29,7 +30,10 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./src/* $(PKG_BUILD_DIR)/
+endef
+
+define Build/Compile
+	$(TARGET_CC) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/px5g px5g.c -lpolarssl
 endef
 
 define Package/px5g/install

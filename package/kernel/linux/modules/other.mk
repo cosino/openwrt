@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,10 +10,26 @@ OTHER_MENU:=Other modules
 WATCHDOG_DIR:=watchdog
 
 
+define KernelPackage/6lowpan-iphc
+  USBMENU:=$(OTHER_MENU)
+  TITLE:=6lowpan shared code
+  DEPENDS:=@!LINUX_3_8 @!LINUX_3_10 @!LINUX_3_13
+  KCONFIG:=CONFIG_6LOWPAN_IPHC
+  HIDDEN:=1
+  FILES:=$(LINUX_DIR)/net/ieee802154/6lowpan_iphc.ko
+  AUTOLOAD:=$(call Autoprobe,6lowpan_iphc)
+endef
+
+define KernelPackage/6lowpan-iphc/description
+  Shared 6lowpan code for IEEE 802.15.4 and Bluetooth.
+endef
+
+$(eval $(call KernelPackage,6lowpan-iphc))
+
 define KernelPackage/bluetooth
   SUBMENU:=$(OTHER_MENU)
   TITLE:=Bluetooth support
-  DEPENDS:=@USB_SUPPORT +kmod-usb-core +kmod-crypto-hash
+  DEPENDS:=@USB_SUPPORT +kmod-usb-core +kmod-crypto-hash +(!LINUX_3_8&&!LINUX_3_10&&!LINUX_3_13):kmod-6lowpan-iphc
   KCONFIG:= \
 	CONFIG_BLUEZ \
 	CONFIG_BLUEZ_L2CAP \
@@ -52,6 +68,26 @@ define KernelPackage/bluetooth/description
 endef
 
 $(eval $(call KernelPackage,bluetooth))
+
+
+define KernelPackage/bluetooth_6lowpan
+  SUBMENU:=$(OTHER_MENU)
+  TITLE:=Bluetooth 6LoWPAN support
+  DEPENDS:=+kmod-bluetooth @!(LINUX_3_8||LINUX_3_10||LINUX_3_13||LINUX_3_14)
+  KCONFIG:= \
+  CONFIG_6LOWPAN=m \
+  CONFIG_BT_6LOWPAN=m
+  FILES:= \
+       $(LINUX_DIR)/net/bluetooth/bluetooth_6lowpan.ko \
+       $(LINUX_DIR)/net/6lowpan/6lowpan.ko
+       AUTOLOAD:=$(call AutoProbe,bluetooth)
+endef
+
+define KernelPackage/bluetooth_6lowpan/description
+ Kernel support for 6LoWPAN over Bluetooth Low Energy devices
+endef
+
+$(eval $(call KernelPackage,bluetooth_6lowpan))
 
 
 define KernelPackage/bluetooth-hci-h4p
@@ -195,7 +231,6 @@ $(eval $(call KernelPackage,gpio-pcf857x))
 
 define KernelPackage/iio-core
   SUBMENU:=$(OTHER_MENU)
-  DEPENDS:=@!LINUX_3_3 @!LINUX_3_6
   TITLE:=Industrial IO core
   KCONFIG:= \
 	CONFIG_IIO \
@@ -226,17 +261,39 @@ define KernelPackage/iio-ad799x
   KCONFIG:= \
 	CONFIG_AD799X_RING_BUFFER=y \
 	CONFIG_AD799X
-  FILES:=$(LINUX_DIR)/drivers/staging/iio/adc/ad799x.ko
+  FILES:= \
+	$(LINUX_DIR)/drivers/staging/iio/adc/ad799x.ko@lt3.16 \
+	$(LINUX_DIR)/drivers/iio/adc/ad799x.ko@ge3.16
   AUTOLOAD:=$(call AutoLoad,56,ad799x)
 endef
 
 define KernelPackage/iio-ad799x/description
  support for Analog Devices:
  ad7991, ad7995, ad7999, ad7992, ad7993, ad7994, ad7997, ad7998
- i2c analog to digital converters (ADC). WARNING! This driver is still staging!
+ i2c analog to digital converters (ADC).
 endef
 
 $(eval $(call KernelPackage,iio-ad799x))
+
+
+define KernelPackage/iio-dht11
+  SUBMENU:=$(OTHER_MENU)
+  DEPENDS:=kmod-iio-core @GPIO_SUPPORT @USES_DEVICETREE
+  TITLE:=DHT11 (and compatible) humidity and temperature sensors
+  KCONFIG:= \
+	CONFIG_DHT11
+  FILES:=$(LINUX_DIR)/drivers/iio/humidity/dht11.ko
+  AUTOLOAD:=$(call AutoLoad,56,dht11)
+endef
+
+define KernelPackage/iio-dht11/description
+ support for DHT11 and DHT22 digitial humidity and temperature sensors
+ attached at GPIO lines. You will need a custom device tree file to
+ specify the GPIO line to use.
+endef
+
+$(eval $(call KernelPackage,iio-dht11))
+
 
 define KernelPackage/lp
   SUBMENU:=$(OTHER_MENU)
@@ -455,34 +512,39 @@ endef
 $(eval $(call KernelPackage,booke-wdt))
 
 
-define KernelPackage/pwm
+define KernelPackage/rtc-ds1307
   SUBMENU:=$(OTHER_MENU)
-  TITLE:=PWM generic API
-  KCONFIG:=CONFIG_GENERIC_PWM
-  FILES:=$(LINUX_DIR)/drivers/pwm/pwm.ko
+  TITLE:=Dallas/Maxim DS1307 (and compatible) RTC support
+  $(call AddDepends/rtc)
+  DEPENDS+=+kmod-i2c-core
+  KCONFIG:=CONFIG_RTC_DRV_DS1307
+  FILES:=$(LINUX_DIR)/drivers/rtc/rtc-ds1307.ko
+  AUTOLOAD:=$(call AutoProbe,rtc-ds1307)
 endef
 
-define KernelPackage/pwm/description
- Kernel module that implement a generic PWM API
+define KernelPackage/rtc-ds1307/description
+ Kernel module for Dallas/Maxim DS1307/DS1337/DS1338/DS1340/DS1388/DS3231,
+ Epson RX-8025 and various other compatible RTC chips connected via I2C.
 endef
 
-$(eval $(call KernelPackage,pwm))
+$(eval $(call KernelPackage,rtc-ds1307))
 
 
-define KernelPackage/pwm-gpio
+define KernelPackage/rtc-ds1672
   SUBMENU:=$(OTHER_MENU)
-  TITLE:=PWM over GPIO
-  DEPENDS:=+kmod-pwm
-  KCONFIG:=CONFIG_GPIO_PWM
-  FILES:=$(LINUX_DIR)/drivers/pwm/gpio-pwm.ko
-  AUTOLOAD:=$(call AutoProbe,gpio-pwm)
+  TITLE:=Dallas/Maxim DS1672 RTC support
+  $(call AddDepends/rtc)
+  DEPENDS+=+kmod-i2c-core
+  KCONFIG:=CONFIG_RTC_DRV_DS1672
+  FILES:=$(LINUX_DIR)/drivers/rtc/rtc-ds1672.ko
+  AUTOLOAD:=$(call AutoProbe,rtc-ds1672)
 endef
 
-define KernelPackage/pwm-gpio/description
- Kernel module to models a single-channel PWM device using a timer and a GPIO pin
+define KernelPackage/rtc-ds1672/description
+ Kernel module for Dallas/Maxim DS1672 RTC.
 endef
 
-$(eval $(call KernelPackage,pwm-gpio))
+$(eval $(call KernelPackage,rtc-ds1672))
 
 
 define KernelPackage/rtc-isl1208
@@ -634,7 +696,7 @@ define KernelPackage/serial-8250
 	CONFIG_SERIAL_8250_SHARE_IRQ=y \
 	CONFIG_SERIAL_8250_DETECT_IRQ=n \
 	CONFIG_SERIAL_8250_RSA=n
-  FILES:=$(LINUX_DIR)/drivers/tty/serial/8250/8250$(if $(call kernel_patchver_ge,3.7),$(if $(call kernel_patchver_le,3.8),_core)).ko
+  FILES:=$(LINUX_DIR)/drivers/tty/serial/8250/8250$(if $(CONFIG_LINUX_3_8),_core).ko
 endef
 
 define KernelPackage/serial-8250/description
@@ -684,14 +746,18 @@ $(eval $(call KernelPackage,ikconfig))
 define KernelPackage/zram
   SUBMENU:=$(OTHER_MENU)
   TITLE:=ZRAM
-  DEPENDS:=@!LINUX_3_3 +kmod-lib-lzo
+  DEPENDS:=+kmod-lib-lzo @!TARGET_ep93xx +(!LINUX_3_8&&!LINUX_3_10&&!LINUX_3_13&&!LINUX_3_14):kmod-lib-lz4
   KCONFIG:= \
 	CONFIG_ZSMALLOC \
 	CONFIG_ZRAM \
-	CONFIG_ZRAM_DEBUG=n
+	CONFIG_ZRAM_DEBUG=n \
+	CONFIG_PGTABLE_MAPPING=n \
+	CONFIG_ZRAM_LZ4_COMPRESS=y
   FILES:= \
-	$(LINUX_DIR)/drivers/staging/zsmalloc/zsmalloc.ko \
-	$(LINUX_DIR)/drivers/staging/zram/zram.ko
+	$(LINUX_DIR)/drivers/staging/zsmalloc/zsmalloc.ko@lt3.14 \
+	$(LINUX_DIR)/drivers/staging/zram/zram.ko@lt3.14 \
+	$(LINUX_DIR)/mm/zsmalloc.ko@ge3.14 \
+	$(LINUX_DIR)/drivers/block/zram/zram.ko@ge3.14
   AUTOLOAD:=$(call AutoLoad,20,zsmalloc zram)
 endef
 
@@ -711,7 +777,7 @@ define KernelPackage/mvsdio
   AUTOLOAD:=$(call AutoProbe,mvsdio)
 endef
 
-define KernelPacakge/mvsdio/description
+define KernelPackage/mvsdio/description
  Kernel support for the Marvell SDIO controller
 endef
 
@@ -726,13 +792,31 @@ define KernelPackage/pps
   AUTOLOAD:=$(call AutoLoad,17,pps_core,1)
 endef
 
-define KernelPacakge/pps/description
+define KernelPackage/pps/description
  PPS (Pulse Per Second) is a special pulse provided by some GPS
  antennae. Userland can use it to get a high-precision time
  reference.
 endef
 
 $(eval $(call KernelPackage,pps))
+
+
+define KernelPackage/pps-gpio
+  SUBMENU:=$(OTHER_MENU)
+  TITLE:=PPS client using GPIO
+  DEPENDS:=+kmod-pps
+  KCONFIG:=CONFIG_PPS_CLIENT_GPIO
+  FILES:=$(LINUX_DIR)/drivers/pps/clients/pps-gpio.ko
+  AUTOLOAD:=$(call AutoLoad,18,pps-gpio,1)
+endef
+
+define KernelPackage/pps-gpio/description
+ Support for a PPS source using GPIO. To be useful you must
+ also register a platform device specifying the GPIO pin and
+ other options, usually in your board setup.
+endef
+
+$(eval $(call KernelPackage,pps-gpio))
 
 
 define KernelPackage/ptp
@@ -744,7 +828,7 @@ define KernelPackage/ptp
   AUTOLOAD:=$(call AutoLoad,18,ptp,1)
 endef
 
-define KernelPacakge/ptp/description
+define KernelPackage/ptp/description
  The IEEE 1588 standard defines a method to precisely
  synchronize distributed clocks over Ethernet networks.
 endef
@@ -761,7 +845,7 @@ define KernelPackage/ptp-gianfar
   AUTOLOAD:=$(call AutoProbe,gianfar_ptp)
 endef
 
-define KernelPacakge/ptp-gianfar/description
+define KernelPackage/ptp-gianfar/description
  Kernel module for IEEE 1588 support for Freescale
  Gianfar Ethernet drivers
 endef
@@ -786,15 +870,18 @@ $(eval $(call KernelPackage,random-core))
 define KernelPackage/thermal
   SUBMENU:=$(OTHER_MENU)
   TITLE:=Generic Thermal sysfs driver
+  DEPENDS:=+kmod-hwmon-core
   HIDDEN:=1
   KCONFIG:= \
 	CONFIG_THERMAL \
+	CONFIG_THERMAL_OF=y \
 	CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE=y \
 	CONFIG_THERMAL_DEFAULT_GOV_FAIR_SHARE=n \
 	CONFIG_THERMAL_DEFAULT_GOV_USER_SPACE=n \
 	CONFIG_THERMAL_GOV_FAIR_SHARE=n \
 	CONFIG_THERMAL_GOV_STEP_WISE=y \
 	CONFIG_THERMAL_GOV_USER_SPACE=n \
+	CONFIG_THERMAL_HWMON=y \
 	CONFIG_THERMAL_EMULATION=n
   FILES:=$(LINUX_DIR)/drivers/thermal/thermal_sys.ko
   AUTOLOAD:=$(call AutoProbe,thermal_sys)
@@ -862,3 +949,22 @@ define KernelPackage/thermal-kirkwood/description
 endef
 
 $(eval $(call KernelPackage,thermal-kirkwood))
+
+
+define KernelPackage/gpio-beeper
+  SUBMENU:=$(OTHER_MENU)
+  TITLE:=GPIO beeper support
+  KCONFIG:= \
+	CONFIG_INPUT_MISC=y \
+	CONFIG_INPUT_GPIO_BEEPER
+  FILES:= \
+	$(LINUX_DIR)/drivers/input/misc/gpio-beeper.ko
+  AUTOLOAD:=$(call AutoLoad,50,gpio-beeper)
+  $(call AddDepends/input)
+endef
+
+define KernelPackage/gpio-beeper/description
+ This enables playing beeps through an GPIO-connected buzzer
+endef
+
+$(eval $(call KernelPackage,gpio-beeper))

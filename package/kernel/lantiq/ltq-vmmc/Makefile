@@ -17,14 +17,17 @@ PKG_MD5SUM:=d8eee8cba0edb28974cc1f8532e3bd18
 PKG_SOURCE_URL:=http://mirror2.openwrt.org/sources
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 
-include $(INCLUDE_DIR)/ltqtapi.mk
+PKG_USE_MIPS16:=0
+PKG_CHECK_FORMAT_SECURITY:=0
+PKG_FIXUP:=autoreconf
+
 include $(INCLUDE_DIR)/package.mk
 
 define KernelPackage/ltq-vmmc
   SUBMENU:=Voice over IP
   TITLE:=TAPI LL driver for Voice Macro
   URL:=http://www.lantiq.com/
-  DEPENDS:=$(LTQ_TAPI_TARGET) +kmod-ltq-tapi
+  DEPENDS:=@(TARGET_lantiq_falcon||TARGET_lantiq_xway) +kmod-ltq-tapi
   FILES:=$(PKG_BUILD_DIR)/src/drv_vmmc.ko
   AUTOLOAD:=$(call AutoProbe,drv_vmmc)
 endef
@@ -143,7 +146,6 @@ define Build/Configure
 		$(PKG_BUILD_DIR)/firmware
 	$(TAR) -C $(PKG_BUILD_DIR)/firmware -xvzf $(DL_DIR)/$(FW_FILE)
 	$(TAR) -C $(PKG_BUILD_DIR)/coef -xvzf $(DL_DIR)/$(COEF_FILE)
-	(cd $(PKG_BUILD_DIR); aclocal && autoconf && automake)
 	$(call Build/Configure/Default)
 endef
 

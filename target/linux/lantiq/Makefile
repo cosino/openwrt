@@ -7,11 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 BOARD:=lantiq
-BOARDNAME:=Lantiq GPON/XWAY/SVIP
+BOARDNAME:=Lantiq
 FEATURES:=squashfs
-SUBTARGETS=xway xrx200 ase falcon
+SUBTARGETS=xway xrx200
+MAINTAINER:=John Crispin <blogic@openwrt.org>
 
-LINUX_VERSION:=3.10.17
+KERNEL_PATCHVER:=3.18
 
 CPU_TYPE:=mips32r2
 

@@ -12,10 +12,25 @@ define Image/BuildKernel
 	$(TARGET_CROSS)strip -R .notes $(KDIR)/vmlinux.elf -o $(BIN_DIR)/$(IMG_PREFIX)-vmlinux.elf
 	$(STAGING_DIR_HOST)/bin/lzma e $(KDIR)/vmlinux $(KDIR)/vmlinux.bin.l7
 	dd if=$(KDIR)/vmlinux.bin.l7 of=$(BIN_DIR)/$(IMG_PREFIX)-vmlinux.lzma bs=65536 conv=sync
+	$(CP) $(KDIR)/vmlinux.elf $(BIN_DIR)/vmlinux.64
+	md5sum  $(BIN_DIR)/vmlinux.64 | cut -d " " -f 1 | tee $(BIN_DIR)/vmlinux.64.md5
 endef
 
 define Image/Build/squashfs
     $(call prepare_generic_squashfs,$(KDIR)/root.squashfs)
+endef
+
+define Image/Build/ext4/erlite
+	mkdir -p $(KDIR)/sysupgrade-erlite/
+	echo "BOARD=erlite" > $(KDIR)/sysupgrade-erlite/CONTROL
+	$(CP) $(KDIR)/vmlinux.elf $(KDIR)/sysupgrade-erlite/kernel
+	$(CP) $(KDIR)/root.ext4 $(KDIR)/sysupgrade-erlite/root
+	(cd $(KDIR); $(TAR) cvf \
+		$(BIN_DIR)/$(IMG_PREFIX)-erlite-sysupgrade.tar sysupgrade-erlite)
+endef
+
+define Image/Build/ext4
+    $(call Image/Build/ext4/erlite)
 endef
 
 define Image/Build

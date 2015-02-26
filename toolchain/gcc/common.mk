@@ -2,7 +2,7 @@
 # Copyright (C) 2002-2003 Erik Andersen <andersen@uclibc.org>
 # Copyright (C) 2004 Manuel Novoa III <mjn3@uclibc.org>
 # Copyright (C) 2005-2006 Felix Fietkau <nbd@openwrt.org>
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
 GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 ifeq ($(findstring linaro, $(CONFIG_GCC_VERSION)),linaro)
+    LINARO_RELEASE:=
     ifeq ($(CONFIG_GCC_VERSION),"4.6-linaro")
       PKG_REV:=4.6-2013.05
       PKG_VERSION:=4.6.4
@@ -34,13 +35,25 @@ ifeq ($(findstring linaro, $(CONFIG_GCC_VERSION)),linaro)
       PKG_COMP:=bz2
     endif
     ifeq ($(CONFIG_GCC_VERSION),"4.8-linaro")
-      PKG_REV:=4.8-2013.08
-      PKG_VERSION:=4.8.2
+      PKG_REV:=4.8-2014.04
+      PKG_VERSION:=4.8.3
       PKG_VERSION_MAJOR:=4.8
-      PKG_MD5SUM:=668e0f4250e35aff554b66accc9a3105
+      PKG_MD5SUM:=5ba2f3a449b1658ccc09d27cc7ab3c03
       PKG_COMP:=xz
     endif
-    PKG_SOURCE_URL:=http://launchpad.net/gcc-linaro/$(PKG_VERSION_MAJOR)/$(PKG_REV)/+download/
+    ifeq ($(CONFIG_GCC_VERSION),"4.9-linaro")
+      LINARO_RELEASE:=14.10
+      PKG_REV:=4.9-2014.10
+      PKG_VERSION:=4.9.2
+      PKG_VERSION_MAJOR:=4.9
+      PKG_MD5SUM:=230da25b1e7661a8659eb770c5c88442
+      PKG_COMP:=xz
+    endif
+    ifneq ($(LINARO_RELEASE),)
+      PKG_SOURCE_URL:=http://releases.linaro.org/$(LINARO_RELEASE)/components/toolchain/gcc-linaro/$(PKG_VERSION_MAJOR)
+    else
+      PKG_SOURCE_URL:=http://launchpad.net/gcc-linaro/$(PKG_VERSION_MAJOR)/$(PKG_REV)/+download/
+    endif
     PKG_SOURCE:=$(PKG_NAME)-linaro-$(PKG_REV).tar.$(PKG_COMP)
     GCC_DIR:=gcc-linaro-$(PKG_REV)
     HOST_BUILD_DIR:=$(BUILD_DIR_TOOLCHAIN)/$(GCC_DIR)
@@ -95,6 +108,10 @@ endif
 
 GCC_CONFIGURE:= \
 	SHELL="$(BASH)" \
+	$(if $(shell gcc --version 2>&1 | grep LLVM), \
+		CFLAGS="-O2 -fbracket-depth=512 -pipe" \
+		CXXFLAGS="-O2 -fbracket-depth=512 -pipe" \
+	) \
 	$(HOST_SOURCE_DIR)/configure \
 		--with-bugurl=$(BUGURL) \
 		--with-pkgversion="$(PKGVERSION)" \
@@ -156,6 +173,13 @@ endif
 
 ifneq ($(GCC_ARCH),)
   GCC_CONFIGURE+= --with-arch=$(GCC_ARCH)
+endif
+
+ifneq ($(CONFIG_SOFT_FLOAT),y)
+  ifeq ($(CONFIG_arm),y)
+    GCC_CONFIGURE+= \
+		--with-float=hard
+  endif
 endif
 
 GCC_MAKE:= \

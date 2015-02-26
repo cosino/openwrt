@@ -9,8 +9,20 @@ get_status_led() {
 	3g-6200n)
 		status_led="edimax:green:power"
 		;;
-	3g300m | w150m)
+	3g150b | 3g300m | w150m)
 		status_led="tenda:blue:ap"
+		;;
+	ai-br100)
+		status_led="aigale:blue:wlan"
+		;;
+	ar670w)
+		status_led="ar670w:green:power"
+		;;
+	ar725w)
+		status_led="ar725w:green:power"
+		;;
+	awapn2403)
+		status_led="asiarf:green:wps"
 		;;
 	argus-atp52b)
 		status_led="argus-atp52b:green:run"
@@ -21,8 +33,11 @@ get_status_led() {
 	br6524n)
 		status_led="edimax:blue:power"
 		;;
-	br6425)
+	br6425 | br-6475nd)
 		status_led="edimax:green:power"
+		;;
+	cy-swr1100)
+		status_led="samsung:blue:wps"
 		;;
 	d105)
 		status_led="d105:red:power"
@@ -35,6 +50,9 @@ get_status_led() {
 		;;
 	dap-1350)
 		status_led="d-link:blue:power"
+		;;
+	e1700)
+		status_led="linksys:green:power"
 		;;
 	esr-9753)
 		status_led="esr-9753:orange:power"
@@ -51,9 +69,18 @@ get_status_led() {
 	rt-n13u)
 		status_led="rt-n13u:power"
 		;;
+	hlk-rm04)
+		status_led="hlk-rm04:red:power"
+		;;
+	ht-tm02)
+		status_led="ht-tm02:blue:wlan"
+		;;
 	all0239-3g|\
 	hw550-3g)
 		status_led="hw550-3g:green:status"
+		;;
+	m2m)
+		status_led="m2m:blue:wifi"
 		;;
 	m3)
 		status_led="m3:blue:status"
@@ -61,14 +88,18 @@ get_status_led() {
 	m4)
 		status_led="m4:blue:status"
 		;;
+	mlw221|\
+	mlwg2)
+		status_led="kingston:blue:system"
+		;;
 	mofi3500-3gn)
 		status_led="mofi3500-3gn:green:status"
 		;;
 	mpr-a1)
-		status_led="mpr-a1:red:power"
+		status_led="hame:red:power"
 		;;
 	mpr-a2)
-		status_led="mpr-a2:red:power"
+		status_led="hame:red:power"
 		;;
 	nbg-419n)
 		status_led="nbg-419n:green:power"
@@ -86,6 +117,9 @@ get_status_led() {
 	pwh2004)
 		status_led="pwh2004:green:power"
 		;;
+	px4885)
+		status_led="7links:orange:wifi"
+		;;
 	rt-n15)
 		status_led="rt-n15:blue:power"
 		;;
@@ -94,6 +128,9 @@ get_status_led() {
 		;;
 	rt-n56u | wl-330n | wl-330n3g)
 		status_led="asus:blue:power"
+		;;
+	rut5xx)
+		status_led="rut5xx:green:status"
 		;;
 	sl-r7205)
 		status_led="sl-r7205:green:status"
@@ -108,6 +145,9 @@ get_status_led() {
 	v22rw-2x2)
 		status_led="v22rw-2x2:green:security"
 		;;
+	vocore)
+		status_led="vocore:green:status"
+		;;
 	w306r-v20)
 		status_led="w306r-v20:green:sys"
 		;;
@@ -120,14 +160,16 @@ get_status_led() {
 	whr-g300n)
 		status_led="whr-g300n:green:router"
 		;;
-	whr-300hp2)
-		status_led="buffalo:green:status"
-		;;
+	wmr300 | \
+	whr-300hp2 | \
 	whr-600d)
 		status_led="buffalo:green:status"
 		;;
 	wli-tx4-ag300n)
 		status_led="buffalo:blue:power"
+		;;
+	wzr-agl300nh)
+		status_led="buffalo:green:router"
 		;;
 	wl-351)
 		status_led="wl-351:amber:power"
@@ -135,8 +177,21 @@ get_status_led() {
 	wr512-3gn)
 		status_led="wr512:green:wps"
 		;;
+	wr8305rt)
+		status_led="wr8305rt:sys"
+		;;
+	wsr-600 | \
+	wsr-1166)
+		status_led="buffalo:orange:diag"
+		;;
 	wnce2001)
 		status_led="netgear:green:power"
+		;;
+	nexx-wt1520)
+		status_led="nexx-wt1520:white:power"
+		;;
+	wt3020)
+		status_led="nexx:blue:power"
 		;;
 	mzk-w300nh2)
 		status_led="mzkw300nh2:green:power"
@@ -156,9 +211,19 @@ get_status_led() {
 	xdxrn502j)
 		status_led="xdxrn502j:green:power"
 		;;
+	xiaomi-mini)
+		status_led="xiaomi:red:status"
+		;;
 	f7c027)
 		status_led="belkin:orange:status"
-        ;;
+		;;
+	na930)
+		status_led="na930:blue:power"
+		;;
+	y1 | \
+	y1s)
+		status_led="lenovo:blue:power"
+		;;
 	esac
 }
 
@@ -171,6 +236,9 @@ set_state() {
 		;;
 	failsafe)
 		status_led_blink_failsafe
+		;;
+	preinit_regular)
+		status_led_blink_preinit_regular
 		;;
 	done)
 		status_led_on

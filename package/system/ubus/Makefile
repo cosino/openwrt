@@ -1,18 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ubus
-PKG_VERSION:=2013-09-29
+PKG_VERSION:=2015-01-22
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://nbd.name/luci2/ubus.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6ae17d0298a8f1c24f16a68c8d1884091fb5c39f
+PKG_SOURCE_VERSION:=2d660c519d2fcff95248da9f4fd9b37d61f9eb09
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_MD5SUM:=
 CMAKE_INSTALL:=1
 
-PKG_LICENSE:=LGPLv2.1
+PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
@@ -38,6 +38,7 @@ define Package/libubus
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libubox
+  ABI_VERSION:=$(PKG_VERSION)
   TITLE:=OpenWrt RPC client library
 endef
 
@@ -73,8 +74,7 @@ define Package/libubus-lua/install
 	$(CP) $(PKG_BUILD_DIR)/lua/ubus.so $(1)/usr/lib/lua/
 endef
 
-$(eval $(call BuildPackage,ubus))
-$(eval $(call BuildPackage,ubusd))
 $(eval $(call BuildPackage,libubus))
 $(eval $(call BuildPackage,libubus-lua))
-
+$(eval $(call BuildPackage,ubus))
+$(eval $(call BuildPackage,ubusd))

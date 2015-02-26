@@ -1,5 +1,14 @@
 --- a/Makefile
 +++ b/Makefile
+@@ -5,7 +5,7 @@
+ ifeq ($(KERNELRELEASE),)
+ 
+ MAKEFLAGS += --no-print-directory
+-SHELL := /bin/bash
++SHELL := /usr/bin/env bash
+ BACKPORT_PWD := $(shell pwd)
+ 
+ KMODDIR ?= updates
 @@ -19,6 +19,7 @@ KLIB_BUILD ?= $(KLIB)/build/
  KERNEL_CONFIG := $(KLIB_BUILD)/.config
  KERNEL_MAKEFILE := $(KLIB_BUILD)/Makefile
@@ -128,10 +137,10 @@
 +	@$(MAKE) Kconfig.versions
  	@$(MAKE) -f Makefile.real "$@"
  
- else
+ .PHONY: defconfig-help
 --- a/Makefile.real
 +++ b/Makefile.real
-@@ -54,7 +54,7 @@ defconfig-%::
+@@ -59,7 +59,7 @@ defconfig-%::
  
  backport-include/backport/autoconf.h: .config Kconfig.versions Kconfig.kernel
  	@$(MAKE) oldconfig
@@ -140,7 +149,7 @@
  	@grep -f .local-symbols .config | (				\
  		echo "#ifndef COMPAT_AUTOCONF_INCLUDED"			;\
  		echo "#define COMPAT_AUTOCONF_INCLUDED"			;\
-@@ -75,7 +75,12 @@ backport-include/backport/autoconf.h: .c
+@@ -80,7 +80,12 @@ backport-include/backport/autoconf.h: .c
  			esac						;\
  		done							;\
  		echo "#endif /* COMPAT_AUTOCONF_INCLUDED */"		;\

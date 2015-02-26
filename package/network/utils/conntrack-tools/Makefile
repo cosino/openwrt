@@ -19,9 +19,12 @@ PKG_SOURCE_URL:= \
 PKG_MD5SUM:=5add24d4761baf17af630d5627a71752
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_LICENSE:=GPL-2.0
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+
+TAR_OPTIONS += --exclude='*.rej'
 
 include $(INCLUDE_DIR)/package.mk
 

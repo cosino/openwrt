@@ -14,7 +14,7 @@ PKG_RELEASE:=20
 PKG_BUILD_DIR := $(KERNEL_BUILD_DIR)/$(PKG_NAME)
 STAMP_PREPARED := $(STAMP_PREPARED)_$(call confvar,CONFIG_MTD_REDBOOT_PARTS)
 
-PKG_LICENSE:=GPLv2 GPLv2+
+PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
@@ -22,6 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mtd
   SECTION:=utils
   CATEGORY:=Base system
+  DEPENDS:=+libubox
   TITLE:=Update utility for trx firmware images
 endef
 

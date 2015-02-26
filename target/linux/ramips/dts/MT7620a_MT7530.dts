@@ -99,9 +99,18 @@
 
 	gsw@10110000 {
 		ralink,port4 = "gmac";
+		mediatek,mt7530 = <1>;
 	};
 
 	pcie@10140000 {
+		status = "okay";
+	};
+
+	ehci@101c0000 {
+		status = "okay";
+	};
+
+	ohci@101c1000 {
 		status = "okay";
 	};
 };
